@@ -1,0 +1,202 @@
+<?php
+//$Id$
+
+/*
+*
+* Implementation of hook_requirements();
+*
+*/
+function skmap_requirements($phase){
+  $requirements = array();
+
+  if($phase == 'runtime'){
+    if(file_exists(libraries_get_path('infobox')) && file_exists(libraries_get_path('markerclusterer')) && file_exists(libraries_get_path('shakemap'))){
+      $requirements['skmap'] = array(
+        'title' => t('SK Map'),
+        'value' => t('All the libraries are loaded!'),
+        'severity' => REQUIREMENT_OK,
+      );
+    }else{
+      $requirements['skmap'] = array(
+        'title' => t('SK Map'),
+        'value' => t('Unavailable'),
+        'description' => t('There is one or more libraries left. Check the readme files for more instructions.'),
+        'severity' => REQUIREMENT_ERROR,
+      );
+    }
+  }
+
+  return $requirements;
+}
+
+/*
+*
+* Implementation of hook_menu();
+*
+*/
+function skmap_menu(){
+  $items = array();
+
+  $items['admin/config/services/skmap'] = array(
+	'title' => t('SK Map Configuration'),
+	'page callback' => 'drupal_get_form',
+	'page arguments' => array('skmap_setting'),
+	'access arguments' => array('administer site configuration'),
+	'file' => 'skmap.admin.inc',
+  );
+
+  $items['admin/config/services/skmap/setting'] = array(
+    'title' => t('SK Map Configuration'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -1,
+    'file' => 'skmap.admin.inc',
+  );
+
+  $items['admin/config/services/skmap/markers'] = array(
+    'title' => t('Markers'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('markers_setting'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'markers.admin.inc',
+    'weight' => 1,
+  );
+
+  $items['admin/config/services/skmap/infobox'] = array(
+    'title' => t('Infobox'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('infobox_setting'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'infobox.admin.inc',
+    'weight' => 2,
+  );
+
+  return $items;
+}
+
+/*
+*
+* Implementation of hook_init();
+*
+*/
+function skmap_init(){
+  $page = explode("\n", variable_get('skmap_settings_other_page', ""));
+  $path = drupal_get_path_alias($_GET['q']);
+  if(!empty($page)){
+    for($i = 0; $i < count($page); $i++){
+      if(drupal_match_path($path, $page[$i])){
+        drupal_add_html_head(_skmap_get_gmap(), 'skmap');
+      }
+    }
+  }
+}
+
+function skmap_preprocess_page(&$vars){
+  if(arg(0) == 'node' && is_numeric(arg(1)) && arg(2) != 'edit' && !arg(2)){
+    $node = $vars['node'];
+    $node_types = variable_get('skmap_settings_node_types');
+    for($p = 0; $p < count($node_types); $p++){
+      if($node->type == $node_types[$p] && arg(2) != 'edit'){
+        drupal_add_html_head(_skmap_get_gmap(), 'skmap');
+      }
+    }
+  }
+}
+
+/*
+*
+* Implementation of hook_perm();
+*
+*/
+function skmap_perm(){
+  return array();
+}
+
+/*
+*
+* Insert the main Javascript from jmapping plugin
+*
+*/
+function skmap_set_js(){
+  $jss = array(
+    'infobox' => libraries_get_path('infobox'),
+    'markerclusterer' => libraries_get_path('markerclusterer'),
+    'shakemap' => libraries_get_path('shakemap'),
+    'oms' => libraries_get_path('oms'),
+  );
+
+  //map options
+  $map_options = variable_get('skmap_options', '');
+  foreach($map_options as $key => $option){
+    if($option != "0"){
+      drupal_add_js(array('skmap' => array('map_options' => array($key => $option))), 'setting');
+    }else{
+      drupal_add_js(array('skmap' => array('map_options' => array($key => FALSE))), 'setting');
+    }
+  }
+
+  //add markers information
+  drupal_add_js(array('skmap' => array('category' => _skmap_get_markers())), 'setting');
+
+  //add basic libraries
+  if(variable_get('skmap_libraries_infobox', 0)){
+    drupal_add_js($jss['infobox'].'/infobox.js');
+    drupal_add_js(array('skmap' => array('infobox' => TRUE)), 'setting');
+  }
+  if(variable_get('skmap_libraries_oms', 0)){
+    drupal_add_js($jss['oms'].'/oms.min.js');
+    drupal_add_js(array('skmap' => array('oms' => TRUE)), 'setting');
+  }
+  drupal_add_js($jss['markerclusterer'].'/markerclusterer.js');
+  if(variable_get('skmap_libraries_shakemap_min', 0)){
+    drupal_add_js($jss['shakemap'].'/jquery.shakeMap.js');
+  }else{
+    drupal_add_js($jss['shakemap'].'/jquery.shakeMap.min.js');
+  }
+}
+
+/*
+*
+* Add markers information
+*
+* @return
+*
+* $markers: Structured array of the category => icon url of every marker
+*
+*/
+function _skmap_get_markers(){
+  $markers_raw = explode("\n", variable_get('skmap_markers_markers', "default|default.png"));
+  $markers = array();
+  foreach($markers_raw as $key => $value){
+    $set = explode('|', $value);
+    $markers[$set[0]] = variable_get('skmap_markers_path', '/sites/default/files/skmap/markers/').str_replace("\r", "", $set[1]);
+    //drupal_set_message($set[0]." ".$set[1]);
+  }
+  return $markers;
+}
+
+/*
+*
+* Add required files for Google Maps
+*
+* @return
+*
+* $map: Structured array of the Google Maps Javascript file
+*
+*/
+function _skmap_get_gmap(){
+  $map = array(
+    '#tag' => 'script',
+    '#value_prefix' => '',
+    '#value'=>'',
+    '#value_suffix' => '',
+    '#attributes' => array(
+      'type' => 'text/javascript',
+      'src' => "http://maps.google.com/maps/api/js?sensor=false&language=it&region=IT",
+    ),
+  );
+  return $map;
+}
+
+?>

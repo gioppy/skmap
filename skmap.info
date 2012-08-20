@@ -1,0 +1,7 @@
+; $id$
+
+name = SK Map
+description = Use ShakeMap jQuery plugin to show a Google Map
+package = Google Maps
+dependencies[] = libraries
+core = 7.x
