@@ -14,7 +14,7 @@ function markers_setting(){
     '#type' => 'textfield',
     '#title' => t('Base path to the markers icons'),
     '#description' => t('The base path where the icons images is stored, relative to the Drupal base path.'),
-    '#default_value' => variable_get('skmap_markers_path', '/sites/default/files/skmap/markers/'),
+    '#default_value' => variable_get('skmap_markers_path', 'sites/default/files/skmap/markers/'),
   );
 
   $form['skmap_markers']['markers'] = array(

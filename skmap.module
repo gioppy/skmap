@@ -72,6 +72,16 @@ function skmap_menu(){
     'weight' => 2,
   );
 
+  $items['admin/config/services/skmap/clusterer'] = array(
+    'title' => t('MarkerClusterer'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('clusterer_setting'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'clusterer.admin.inc',
+    'weight' => 2,
+  );
+
   return $items;
 }
 
@@ -139,6 +149,9 @@ function skmap_set_js(){
   //add markers information
   drupal_add_js(array('skmap' => array('category' => _skmap_get_markers())), 'setting');
 
+  //add markerclusterer information
+  drupal_add_js(array('skmap' => array('clusterer' => array('path' => variable_get('skmap_clusterer_path', 'sites/default/files/skmap/clusterer/')))), 'setting');
+
   //add basic libraries
   if(variable_get('skmap_libraries_infobox', 0)){
     drupal_add_js($jss['infobox'].'/infobox.js');
@@ -147,12 +160,14 @@ function skmap_set_js(){
   if(variable_get('skmap_libraries_oms', 0)){
     drupal_add_js($jss['oms'].'/oms.min.js');
     drupal_add_js(array('skmap' => array('oms' => TRUE)), 'setting');
+  }else{
+    drupal_add_js(array('skmap' => array('oms' => FALSE)), 'setting');
   }
   drupal_add_js($jss['markerclusterer'].'/markerclusterer.js');
   if(variable_get('skmap_libraries_shakemap_min', 0)){
-    drupal_add_js($jss['shakemap'].'/jquery.shakeMap.js');
-  }else{
     drupal_add_js($jss['shakemap'].'/jquery.shakeMap.min.js');
+  }else{
+    drupal_add_js($jss['shakemap'].'/jquery.shakeMap.js');
   }
 }
 
@@ -170,7 +185,7 @@ function _skmap_get_markers(){
   $markers = array();
   foreach($markers_raw as $key => $value){
     $set = explode('|', $value);
-    $markers[$set[0]] = variable_get('skmap_markers_path', '/sites/default/files/skmap/markers/').str_replace("\r", "", $set[1]);
+    $markers[$set[0]] = base_path().variable_get('skmap_markers_path', 'sites/default/files/skmap/markers/').str_replace("\r", "", $set[1]);
     //drupal_set_message($set[0]." ".$set[1]);
   }
   return $markers;
