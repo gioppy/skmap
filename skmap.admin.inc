@@ -92,10 +92,8 @@ function skmap_setting_submit($form, &$form_state){
   variable_set('skmap_settings_node_types', $content_type);
   //map options variables
   $map_options = array();
-  foreach($form_state['values']['map_options'] as $option){
-    if($option){
-      $map_options[] = $option;
-    }
+  foreach($form_state['values']['map_options'] as $key => $option){
+    $map_options[$key] = $option;
   }
   variable_set('skmap_settings_other_page', $form_state['values']['other_page']);
   variable_set('skmap_options', $map_options);

@@ -97,6 +97,7 @@ function skmap_init(){
     for($i = 0; $i < count($page); $i++){
       if(drupal_match_path($path, $page[$i])){
         drupal_add_html_head(_skmap_get_gmap(), 'skmap');
+        skmap_set_js();
       }
     }
   }
@@ -109,6 +110,7 @@ function skmap_preprocess_page(&$vars){
     for($p = 0; $p < count($node_types); $p++){
       if($node->type == $node_types[$p] && arg(2) != 'edit'){
         drupal_add_html_head(_skmap_get_gmap(), 'skmap');
+        skmap_set_js();
       }
     }
   }
@@ -138,9 +140,10 @@ function skmap_set_js(){
 
   //map options
   $map_options = variable_get('skmap_options', '');
+  
   foreach($map_options as $key => $option){
     if($option != "0"){
-      drupal_add_js(array('skmap' => array('map_options' => array($key => $option))), 'setting');
+      drupal_add_js(array('skmap' => array('map_options' => array($key => TRUE))), 'setting');
     }else{
       drupal_add_js(array('skmap' => array('map_options' => array($key => FALSE))), 'setting');
     }
