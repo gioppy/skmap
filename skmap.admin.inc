@@ -73,6 +73,14 @@ function skmap_setting(){
     '#description' => t('Select the map options you want to activate'),
     '#default_value' => variable_get('skmap_options', array('panControl', 'zoomControl', 'streetViewControl', 'draggable', 'scrollwheel')),
   );
+  
+  $form['skmap_gmap']['default_zoom'] = array(
+    '#type' => 'select',
+    '#title' => t('Default Zoom'),
+    '#options' => array(1 => 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18),
+    '#description' => t('Select the default zoom level. This is applicable only if the map present one single marker.'),
+    '#default_value' => variable_get('skmap_default_zoom', 9)
+  );
 
   $form['#submit'][] = 'skmap_setting_submit';
 
@@ -97,6 +105,7 @@ function skmap_setting_submit($form, &$form_state){
   }
   variable_set('skmap_settings_other_page', $form_state['values']['other_page']);
   variable_set('skmap_options', $map_options);
+  variable_set('skmap_default_zoom', $form_state['values']['default_zoom']);
 }
 
 ?>

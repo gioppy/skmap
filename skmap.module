@@ -148,6 +148,9 @@ function skmap_set_js(){
       drupal_add_js(array('skmap' => array('map_options' => array($key => FALSE))), 'setting');
     }
   }
+  
+  $zoom = variable_get('skmap_default_zoom', 9);
+  drupal_add_js(array('skmap' => array('map_options' => array('zoom' => (int) $zoom))), 'setting');
 
   //add markers information
   drupal_add_js(array('skmap' => array('category' => _skmap_get_markers())), 'setting');
