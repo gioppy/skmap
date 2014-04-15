@@ -10,7 +10,7 @@ function skmap_setting(){
 	'#description' => t('General Settings for SK Map.'),
   );
 
-  $node_types = node_type_get_names();
+  $node_types = node_get_types('names');
   $form['skmap_settings']['node_types'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Contet type to use Google Maps'),

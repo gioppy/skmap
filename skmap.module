@@ -37,7 +37,7 @@ function skmap_requirements($phase){
 function skmap_menu(){
   $items = array();
 
-  $items['admin/config/services/skmap'] = array(
+  $items['admin/settings/skmap'] = array(
 	'title' => t('SK Map Configuration'),
 	'page callback' => 'drupal_get_form',
 	'page arguments' => array('skmap_setting'),
@@ -45,14 +45,14 @@ function skmap_menu(){
 	'file' => 'skmap.admin.inc',
   );
 
-  $items['admin/config/services/skmap/setting'] = array(
+  $items['admin/settings/skmap/setting'] = array(
     'title' => t('SK Map Configuration'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -1,
     'file' => 'skmap.admin.inc',
   );
 
-  $items['admin/config/services/skmap/markers'] = array(
+  $items['admin/settings/skmap/markers'] = array(
     'title' => t('Markers'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('markers_setting'),
@@ -62,7 +62,7 @@ function skmap_menu(){
     'weight' => 1,
   );
 
-  $items['admin/config/services/skmap/infobox'] = array(
+  $items['admin/settings/skmap/infobox'] = array(
     'title' => t('Infobox'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('infobox_setting'),
@@ -72,7 +72,7 @@ function skmap_menu(){
     'weight' => 2,
   );
 
-  $items['admin/config/services/skmap/clusterer'] = array(
+  $items['admin/settings/skmap/clusterer'] = array(
     'title' => t('MarkerClusterer'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('clusterer_setting'),
@@ -96,7 +96,7 @@ function skmap_init(){
   if(!empty($page)){
     for($i = 0; $i < count($page); $i++){
       if(drupal_match_path($path, $page[$i])){
-        drupal_add_html_head(_skmap_get_gmap(), 'skmap');
+        drupal_set_html_head(_skmap_get_gmap());
         skmap_set_js();
       }
     }
@@ -106,10 +106,10 @@ function skmap_init(){
 function skmap_preprocess_page(&$vars){
   if(arg(0) == 'node' && is_numeric(arg(1)) && arg(2) != 'edit' && !arg(2)){
     $node = $vars['node'];
-    $node_types = variable_get('skmap_settings_node_types');
+    $node_types = variable_get('skmap_settings_node_types', array());
     for($p = 0; $p < count($node_types); $p++){
       if($node->type == $node_types[$p] && arg(2) != 'edit'){
-        drupal_add_html_head(_skmap_get_gmap(), 'skmap');
+        drupal_set_html_head(_skmap_get_gmap());
         skmap_set_js();
       }
     }
@@ -207,17 +207,7 @@ function _skmap_get_markers(){
 *
 */
 function _skmap_get_gmap(){
-  $map = array(
-    '#tag' => 'script',
-    '#value_prefix' => '',
-    '#value'=>'',
-    '#value_suffix' => '',
-    '#attributes' => array(
-      'type' => 'text/javascript',
-      'src' => "http://maps.google.com/maps/api/js?sensor=false&language=it&region=IT",
-    ),
-  );
-  return $map;
+  return '<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false&language=it&region=IT"></script>';
 }
 
 ?>

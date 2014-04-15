@@ -1,4 +1,4 @@
 skmap
 =====
 
-Drupal 7.x Module for the ShakeMap jQuery plugin
+Drupal 6.x Module for the ShakeMap jQuery plugin
