@@ -3,6 +3,19 @@
 
 /*
 *
+* Implementation of hook_theme();
+*
+*/
+function skmap_theme(){
+  return array(
+    'skmap_simple_map' => array(
+      'variables' => array('delta' => NULL)
+    )
+  );
+}
+
+/*
+*
 * Implementation of hook_requirements();
 *
 */
@@ -38,11 +51,12 @@ function skmap_menu(){
   $items = array();
 
   $items['admin/config/services/skmap'] = array(
-	'title' => t('SK Map Configuration'),
-	'page callback' => 'drupal_get_form',
-	'page arguments' => array('skmap_setting'),
-	'access arguments' => array('administer site configuration'),
-	'file' => 'skmap.admin.inc',
+	  'title' => t('SK Map Configuration'),
+	  'description' => t('Configure ShakeMap globally.'),
+	  'page callback' => 'drupal_get_form',
+	  'page arguments' => array('skmap_setting'),
+	  'access arguments' => array('administer site configuration'),
+	  'file' => 'skmap.admin.inc',
   );
 
   $items['admin/config/services/skmap/setting'] = array(
@@ -103,6 +117,11 @@ function skmap_init(){
   }
 }
 
+/*
+*
+* Implementation of template_preprocess_page();
+*
+*/
 function skmap_preprocess_page(&$vars){
   if(arg(0) == 'node' && is_numeric(arg(1)) && arg(2) != 'edit' && !arg(2)){
     $node = $vars['node'];
@@ -113,6 +132,146 @@ function skmap_preprocess_page(&$vars){
         skmap_set_js();
       }
     }
+  }
+}
+
+/*
+*
+* Implementation of hook_block_info();
+*
+*/
+function skmap_block_info(){
+  $blocks['skmap_simple_map'] = array(
+    'info' => t('Simple ShakeMap'),
+    'cache' => DRUPAL_NO_CACHE
+  );
+  
+  return $blocks;
+}
+
+/*
+*
+* Implementation of hook_block_view();
+*
+*/
+function skmap_block_view($delta){
+  $block = array();
+  
+  switch($delta){
+    case 'skmap_simple_map':
+      drupal_add_html_head(_skmap_get_gmap(), 'skmap');
+      skmap_set_js();
+      
+      $block['subject'] = t('Map');
+      $block['content'] = array(
+        '#theme' => 'skmap_simple_map',
+        '#delta' => $delta,
+        '#attached' => array(
+          'js' => array(
+            drupal_get_path('module', 'skmap') . '/js/simplemap.js'
+          )
+        )
+      );
+    break;
+  }
+  
+  return $block;
+}
+
+/*
+*
+* Implementation of hook_block_configure();
+*
+*/
+function skmap_block_configure($delta = ''){
+  $form = array();
+  
+  switch($delta){
+    case 'skmap_simple_map':
+      //drupal_add_html_head(_skmap_get_gmap(), 'skmap');
+      $form['skmap_simple_map_latlng'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Coordinates'),
+        '#description' => t('Set the coordinates of your marker.'),
+        '#collapsed' => FALSE,
+        '#collapsible' => TRUE
+      );
+      
+      $form['skmap_simple_map_latlng']['latitude'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Latitude'),
+        '#description' => t('Latitude in decimal degrees.'),
+        '#required' => TRUE,
+        '#default_value' => variable_get('skmap_simple_map_latitude', '')
+      );
+      
+      $form['skmap_simple_map_latlng']['longitude'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Longitude'),
+        '#description' => t('Longitude in decimal degrees.'),
+        '#required' => TRUE,
+        '#default_value' => variable_get('skmap_simple_map_longitude', '')
+      );
+      
+      $form['skmap_simple_map_latlng']['width'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Width'),
+        '#description' => t('Width of the map (in px, em or %).'),
+        '#required' => TRUE,
+        '#default_value' => variable_get('skmap_simple_map_width', '')
+      );
+      
+      $form['skmap_simple_map_latlng']['height'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Height'),
+        '#required' => TRUE,
+        '#description' => t('Height of the map (in px, em or %).'),
+        '#default_value' => variable_get('skmap_simple_map_height', '')
+      );
+    break;
+  }
+  
+  return $form;
+}
+
+function theme_skmap_simple_map($variables){
+  $output = '';
+  
+  $width = variable_get('skmap_simple_map_width', 0);
+  $height = variable_get('skmap_simple_map_height', 0);
+  
+  $element = array(
+    'element' => array(
+      '#attributes' => array(
+        'id' => 'skmap-simple-map',
+        'class' => array(
+          'simple-map-default',
+          'simple-map'
+        ),
+        'style' => 'width:' . $width . ';height:' . $height . ';'
+      ),
+      '#children' => ''
+    )
+  );
+  
+  $output .= theme_container($element);
+  
+  return $output;
+}
+
+/*
+*
+* Implementation of hook_block_save();
+*
+*/
+function skmap_block_save($delta = '', $edit = array()){
+  switch($delta){
+    case 'skmap_simple_map':
+      variable_set('skmap_simple_map_latitude', $edit['latitude']);
+      variable_set('skmap_simple_map_longitude', $edit['longitude']);
+      variable_set('skmap_simple_map_width', $edit['width']);
+      variable_set('skmap_simple_map_height', $edit['height']);
+    break;
   }
 }
 
@@ -157,6 +316,13 @@ function skmap_set_js(){
 
   //add markerclusterer information
   drupal_add_js(array('skmap' => array('clusterer' => array('path' => variable_get('skmap_clusterer_path', 'sites/default/files/skmap/clusterer/')))), 'setting');
+  
+  //add default location
+  $default_lat = variable_get('skmap_simple_map_latitude', '');
+  $default_lng = variable_get('skmap_simple_map_longitude', '');
+  if($default_lat && $default_lng){
+    drupal_add_js(array('skmap' => array('simple_map' => array('latitude' => $default_lat, 'longitude' => $default_lng))), 'setting');
+  }
 
   //add basic libraries
   if(variable_get('skmap_libraries_infobox', 0)){
