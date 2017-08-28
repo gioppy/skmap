@@ -10,12 +10,19 @@ function skmap_setting(){
 	'#description' => t('General Settings for SK Map.'),
   );
 
+  $form['skmap_settings']['apikey'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Google Maps API Key'),
+    '#description' => t('Insert the API key generated from Google Console. <a href="@url" target="_blank">Generate new one.</a>', array('@url' => 'https://developers.google.com/maps/documentation/javascript/get-api-key')),
+    '#default_value' => variable_get('skmap_apikey', '')
+  );
+
   $node_types = node_type_get_names();
   $form['skmap_settings']['node_types'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Contet type to use Google Maps'),
     '#options' => $node_types,
-	'#default_value' => variable_get('skmap_settings_node_types', array()),
+    '#default_value' => variable_get('skmap_settings_node_types', array()),
   );
 
   $form['skmap_settings']['other_page'] = array(
@@ -88,6 +95,7 @@ function skmap_setting(){
 }
 
 function skmap_setting_submit($form, &$form_state){
+  variable_set('skmap_apikey', $form_state['values']['apikey']);
   variable_set('skmap_libraries_shakemap_min', $form_state['values']['shakemap_js']);
   variable_set('skmap_libraries_infobox', $form_state['values']['use_infobox']);
   variable_set('skmap_libraries_oms', $form_state['values']['use_oms']);
@@ -107,5 +115,3 @@ function skmap_setting_submit($form, &$form_state){
   variable_set('skmap_options', $map_options);
   variable_set('skmap_default_zoom', $form_state['values']['default_zoom']);
 }
-
-?>
